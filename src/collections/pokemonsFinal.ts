@@ -78,12 +78,12 @@ export const addPokemonToUser = async ( pokemonId: string, nickname: string, use
 
   const ownedPokemon = {
     pokemonId: localPokemonId,
-    nickname: nickname ?? null,
+    nickname: nickname,
     attack: pokemon.attack,
     defense: pokemon.defense,
     speed: pokemon.speed,
     special: pokemon.special,
-    level: 1,
+    level: pokemon.level,
   };
 
   const insertResult = await db
