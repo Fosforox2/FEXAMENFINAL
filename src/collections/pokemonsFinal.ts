@@ -58,12 +58,12 @@ export const CreatePokemon = async (pokemon: { name: string; description: string
   };
 };
 
-export const addPokemonToUser = async (
-  pokemonId: string,
-  nickname: string,
-  userId: string
-) => {
+export const addPokemonToUser = async ( pokemonId: string, nickname: string, userId: string ) => {
   const db = getDB();
+
+  if (!ObjectId.isValid(pokemonId)) {
+    throw new Error("pokemonId Invalido");
+  }
 
   const localUserId = new ObjectId(userId);
   const localPokemonId = new ObjectId(pokemonId);
@@ -73,27 +73,27 @@ export const addPokemonToUser = async (
     .findOne({ _id: localPokemonId });
 
   if (!pokemon) {
-    throw new Error("Pokemon not found");
+    throw new Error("Pokemon no encontrado");
   }
 
   const ownedPokemon = {
     pokemonId: localPokemonId,
-    nickname,
-    ivs: generateSTATs(),
-    trainerId: localUserId,
-    createdAt: new Date(),
+    nickname: nickname ?? null,
+    attack: pokemon.attack,
+    defense: pokemon.defense,
+    speed: pokemon.speed,
+    special: pokemon.special,
+    level: 1,
   };
 
   const insertResult = await db
     .collection(COLLECTION_OWNED_POKEMONS)
     .insertOne(ownedPokemon);
 
-  const ownedPokemonId = insertResult.insertedId;
-
   await db.collection(COLLECTION_USERS).updateOne(
     { _id: localUserId },
     {
-      $push: { pokemons: ownedPokemonId } as any
+      $push: { pokemons: insertResult.insertedId } as any
     }
   );
 
@@ -116,11 +116,11 @@ export const removePokemonToUser = async (ownedPokemonId: string, userId: string
     .findOne({ _id: localOwnedPokemonId });
 
   if (!ownedPokemon) {
-    throw new Error("OwnedPokemon not found");
+    throw new Error("OwnedPokemon no encontrado");
   }
 
   if (!ownedPokemon.trainerId.equals(localUserId)) {
-    throw new Error("You can only free your own Pokémon");
+    throw new Error("solo puedes soltar tus propios pokemons");
   }
 
   await db.collection(COLLECTION_USERS).updateOne(
